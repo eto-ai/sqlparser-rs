@@ -781,6 +781,7 @@ impl<'a> Tokenizer<'a> {
                 '=' => {
                     chars.next(); // consume
                     match chars.peek() {
+                        Some('=') => self.consume_and_return(chars, Token::DoubleEq),
                         Some('>') => self.consume_and_return(chars, Token::RArrow),
                         _ => Ok(Some(Token::Eq)),
                     }
@@ -1631,6 +1632,24 @@ mod tests {
             Token::make_keyword("IS"),
             Token::Whitespace(Whitespace::Space),
             Token::make_keyword("NULL"),
+        ];
+
+        compare(expected, tokens);
+    }
+
+    #[test]
+    fn tokenize_double_eq() {
+        let sql = String::from("a == 123");
+        let dialect = GenericDialect {};
+        let mut tokenizer = Tokenizer::new(&dialect, &sql);
+        let tokens = tokenizer.tokenize().unwrap();
+
+        let expected = vec![
+            Token::make_word("a", None),
+            Token::Whitespace(Whitespace::Space),
+            Token::DoubleEq,
+            Token::Whitespace(Whitespace::Space),
+            Token::Number(String::from("123"), false),
         ];
 
         compare(expected, tokens);
